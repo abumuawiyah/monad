@@ -1,77 +1,43 @@
-function Monad () {
-  var prototype = Object.create(null);
-  function unit(value) {
-    var monad = Object.create(prototype);
-    monad.bind = function(func, args) {
-      return func(value, ...args);
-    }
-    return monad;
-  }
-
-  unit.method = function(name, func) {
-    prototype[name] = func;
-    return unit;
-  }
-
-  unit.lift = function(name, func) {
-    prototype[name] = function (...args) {
-      return unit(this.bind(func, args));
+function identityMonad(value) {
+    var monad = Object.create(null);
+    
+    // func should return a monad
+    monad.bind = function (func, ...args) {
+        return func(value, ...args);
     };
-    return unit;
-  }
 
-  return unit;
-}
+    // whatever func does, we get our monad back
+    monad.call = function (func, ...args) {
+        func(value, ...args);
 
-function Monad2 (modifier) {
-  var prototype = Object.create(null);
-  function unit(value) {
-    var monad = Object.create(prototype);
-    monad.bind = function(func, args) {
-      return func(value, ...args);
-    }
-
-    if (typeof modifier === 'function') {
-      modifier(monad, value);
-    }
-
-    return monad;
-  }
-
-  unit.method = function(name, func) {
-    prototype[name] = func;
-    return unit;
-  }
-
-  unit.lift = function(name, func) {
-    prototype[name] = function (...args) {
-      return unit(this.bind(func, args));
+        return identityMonad(value);
     };
-    return unit;
-  }
+    
+    // func doesn't have to know anything about monads
+    monad.apply = function (func, ...args) {
+        return identityMonad(func(value, ...args));
+    };
 
-  return unit;
-}
+    // Get the value wrapped in this monad
+    monad.value = function () {
+        return value;
+    };
+    
+    return monad;
+};
 
-var maybe = Monad2(function(monad, value) {
-  if (value === null || value === undefined) {
-    monad.is_null = true;
-    monad.bind = function() {
-      return monad;
-    }
-  }
-});
+var add = (x, ...args) => x + args.reduce((r, n) => r + n, 0),
+    multiply = (x, ...args) => x * args.reduce((r, n) => r * n, 1),
+    divideMonad = (x, ...args) => identityMonad(x / multiply(...args)),
+    log = x => console.log(x),
+    substract = (x, ...args) => x - add(...args);
 
-var monad2 = maybe(null);
-console.log(monad2)
-monad2.bind(alert);
-
-// var ajax = Monad().lift('alert', alert);
-// var monad = ajax('hello world');
-// monad.alert();
-
-
-// var identity = Monad();
-// var monad = identity("hello world");
-// var test = monad.bind(alert);
-// console.log(test)
+identityMonad(100)
+    .apply(add, 10, 29, 13)
+    .apply(multiply, 2)
+    .bind(divideMonad, 2)
+    .apply(substract, 67, 34)
+    .apply(multiply, 1239)
+    .bind(divideMonad, 20, 54, 2)
+    .apply(Math.round)
+    .call(log); // Logs 29
