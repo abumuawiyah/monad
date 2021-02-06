@@ -1,3 +1,24 @@
+
+function ajax(url) {
+  const value = { data: {id: 1, name: 'azizi'} }
+  const monad = {
+    then: (cb) => {
+      cb(value);
+      return monad;
+    }
+  }
+  return monad;
+}
+
+const aj = ajax('abc')
+  .then((v) => console.log(v))
+  .then((v) => console.log('my id', v.data.id))
+  .then((v) => console.log('name', v.data.name));
+
+if (true) {
+  aj.then(v => console.log(v))
+}
+
 function identityMonad(value) {
     var monad = Object.create(null);
     
@@ -41,3 +62,5 @@ identityMonad(100)
     .bind(divideMonad, 20, 54, 2)
     .apply(Math.round)
     .call(log); // Logs 29
+
+  
