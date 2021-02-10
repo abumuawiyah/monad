@@ -10,6 +10,62 @@ function ajax(url) {
   return monad;
 }
 
+class Maybe {
+    constructor(value) {
+      this.__value = value;
+    }
+    static Nothing() {
+      return Maybe.of(null);
+    }
+    static of(valueToBox){
+      return new Maybe(valueToBox);
+    }
+    flatMap(fn){
+      if(this.isNothing()) return Maybe.Nothing();
+      const m = fn(this.__value);
+
+      return m.isNothing() ? 
+           Maybe.Nothing() : 
+           Maybe.of(m.__value);
+    }
+    getOrElse(elseVal) {
+      return this.isNothing() ? elseVal : this.__value;
+    }
+    getOrEmptyArray() {
+      return this.getOrElse([]);
+    }
+    getOrNull() {
+      return this.getOrElse(null);
+    }
+    isNothing() {
+      return this.__value === null || this.__value === undefined;
+    }
+    map(fn) {  
+      return this.isNothing()?       
+               Maybe.of(null):
+               Maybe.of(fn(this.__value));
+    }
+}
+
+const value = 2;
+const mbValue = Maybe.of(value);
+const mapper = x => Maybe.of(x * 2);
+
+console.log(mbValue.flatMap(mapper));
+
+const mbValue2 = Maybe.of(2);
+const mapper2 = x => Maybe.of(x);
+console.log(mbValue2.flatMap(mapper2));
+
+const f = val => Maybe.of(val + 1);
+const g = val => Maybe.of(val * 2);
+const m = Maybe.of(1);
+
+const lhs = m.flatMap(f).flatMap(g);
+const rhs = m.flatMap(x => f(x).flatMap(g));
+
+console.log(lhs,rhs);
+
 const aj = ajax('abc')
   .then((v) => console.log(v))
   .then((v) => console.log('my id', v.data.id))
