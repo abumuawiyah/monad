@@ -10,6 +10,43 @@ function ajax(url) {
   return monad;
 }
 
+class MaybeIntercept {
+    constructor(value) {
+      this.__value = value;
+    }
+    static NonIntercept() {
+      return MaybeIntercept.of(null);
+    }
+    static of(valueToBox){
+      return new MaybeIntercept(valueToBox);
+    }
+    flatMap(fn){
+      if(this.isNothing()) return MaybeIntercept.NonIntercept();
+      const m = fn(this.__value);
+
+      return m.isNothing() ? 
+           MaybeIntercept.NonIntercept() : 
+           MaybeIntercept.of(m.__value);
+    }
+    getOrElse(elseVal) {
+      return this.isNothing() ? elseVal : this.__value;
+    }
+    getOrEmptyArray() {
+      return this.getOrElse([]);
+    }
+    getOrNull() {
+      return this.getOrElse(null);
+    }
+    isNothing() {
+      return this.__value === null || this.__value === undefined;
+    }
+    map(fn) {  
+      return this.isNothing()?       
+               MaybeIntercept.of(null):
+               MaybeIntercept.of(fn(this.__value));
+    }
+}
+
 class Maybe {
     constructor(value) {
       this.__value = value;
